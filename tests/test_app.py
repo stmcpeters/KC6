@@ -39,13 +39,23 @@ class TestFlaskApp(unittest.TestCase):
       
     def test_index(self):
       """
-      Tests initial route/homepage (index.html) renders
+      Tests index page (index.html) renders
+      correctly with a status code of 200 and displays the h1 tag 
+      title for the page
+      """
+      response = self.app.get('/index')
+      self.assertEqual(response.status_code, 200)
+      self.assertIn(b'Top Tech Articles from the New York Times', response.data)
+
+    def test_home(self):
+      """
+      Tests initial route/homepage (home.html) renders
       correctly with a status code of 200 and displays the h1 tag 
       title for the page
       """
       response = self.app.get('/')
       self.assertEqual(response.status_code, 200)
-      self.assertIn(b'Top Tech Articles from the New York Times', response.data)
+      self.assertIn(b'Welcome to my Knowledge Check 6', response.data)
     
 
 
