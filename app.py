@@ -101,5 +101,28 @@ def delete_article(id):
     # render deletion template to confirm article was deleted
     return render_template('delete.html', article=article)
 
+@app.route('/search', methods=['GET','POST'])
+def search():
+    if request.method == 'POST':
+        # opens the database connection
+        connection = news_db_connection()
+        # form data from the user (search query)
+        search = request.form['search']
+        # searches the data from the articles table with the specified title
+        data = connection.execute('''SELECT * FROM articles WHERE title LIKE ?''', ('%' + search + '%',)).fetchall()
+        # pagination for search results data
+        page = int(request.form.get('page', 1))
+        per_page = 2
+        start = (page - 1) * per_page
+        end = start + per_page
+        total_pages = (len(data) + per_page - 1) // per_page
+        items_on_page = data[start:end]
+        # closes database connection
+        connection.close()
+        # renders the search.html page
+        return render_template('search.html', data=data, total_pages=total_pages, page=page, items_on_page=items_on_page, search=search)
+    else:
+        return render_template('search.html')
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000, debug=True)
