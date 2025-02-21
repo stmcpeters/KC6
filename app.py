@@ -1,7 +1,75 @@
-from flask import Flask, render_template, request, redirect, url_for
+# import Flask from flask to create the app
+from flask import Flask, render_template, request, redirect, url_for, session
+# import sqlite3 to connect to the database
 import sqlite3
+# import OAuth from authlib to authenticate users
+from authlib.integrations.flask_client import OAuth
+# import dotenv and os module to access environment variables
+from dotenv import load_dotenv
+# import os module to access environment variables
+import os
 
+# load environment variables from .env file
+# assign the environment variables to variables to be used
+load_dotenv()
+SECRET_KEY = 'secret'
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+
+# create a new instance of Flask
 app = Flask(__name__)
+app.secret_key = SECRET_KEY
+
+# OAuth config
+oauth = OAuth(app)
+# create a new instance of OAuth
+google = oauth.register(
+        name="google",
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        # access_token_url='https://accounts.google.com/o/oauth2/token',
+        access_token_params=None,
+        # authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params=None,
+        api_base_url='https://www.googleapis.com/oauth2/v1/',
+        client_kwargs={'scope': 'email profile'},
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        redirect_uri='http://localhost:8000/authorize'
+)
+
+# use a route decorator to create a route redirecting to the google login page
+@app.route('/login')
+def login():
+    google = oauth.create_client('google')
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+# use a route decorator to create a route for redirecting after successful login
+@app.route('/authorize')
+def authorize():
+    google = oauth.create_client('google')
+    token = google.authorize_access_token()
+    # print(f'token: {token}')
+    resp = google.get('userinfo')
+    # resp.raise_for_status()
+    user_info = resp.json()
+    # print(f'user_info: {user_info}')
+    session['email'] = user_info['email']
+    # will redirect to the index.html after successful login
+    return redirect(url_for('index'))
+
+# starter page
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+# use a route decorator to create a route for logging out
+@app.route('/logout')
+def logout():
+    for key in list(session.keys()):
+        session.pop(key)
+    return render_template('logout.html')
 
 # create connection to database tech_news.db
 def news_db_connection():
@@ -21,9 +89,11 @@ def jokes_db_connection():
     # access the database using a cursor object
     return conn
 
-
-@app.route('/', methods=['GET'])
+# create a route for the home page
+@app.route('/index', methods=['GET'])
 def index():
+    # get the session email
+    email = dict(session).get('email', None)
     # opens connection to database
     connection = news_db_connection()
     conn = jokes_db_connection()
