@@ -30,11 +30,18 @@ def index():
     # fetch data from articles table
     data = connection.execute('''SELECT * FROM articles''').fetchall()
     joke = conn.execute('''SELECT * FROM tech_jokes LIMIT 1''').fetchone()
+    # pagination for articles data
+    page = request.args.get('page', 1, type=int)
+    per_page = 2
+    start = (page - 1) * per_page
+    end = start + per_page
+    total_pages = (len(data) + per_page - 1) // per_page
+    items_on_page = data[start:end]
     # close database connection
     connection.close()
     conn.close()
     # render articles data in index.html and pass data in order to display
-    return render_template('index.html', data=data, joke=joke)
+    return render_template('index.html', items_on_page=items_on_page, joke=joke, page=page, total_pages=total_pages)
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_article():
