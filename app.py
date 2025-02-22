@@ -1,5 +1,11 @@
 # import Flask from flask to create the app
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, render_template_string
+# import Limiter from flask_limiter to limit the number of requests
+from flask_limiter import Limiter
+# import get_remote_address from flask_limiter.util to get the user's IP address
+from flask_limiter.util import get_remote_address
+# import flask-login
+from flask_login import login_required
 # import sqlite3 to connect to the database
 import sqlite3
 # import OAuth from authlib to authenticate users
@@ -38,8 +44,35 @@ google = oauth.register(
         redirect_uri='http://localhost:8000/authorize'
 )
 
+# flask-limiter config
+limiter = Limiter(
+# use the user's IP address for rate limiting
+    get_remote_address, 
+    app=app,
+    # sets a global rate limit (e.g., 15 requests per hour)
+    default_limits=["15 per hour"], 
+)
+
+# error handling for exceeding rate limit
+@app.errorhandler(429)
+def ratelimit_error(e):
+    # allows you to render a template from a string
+    return render_template_string('''
+        <html>
+        <head>
+            <script type="text/javascript">
+                alert("You have exceeded your request limit! Please try again later.");
+                window.history.back();  // returns to landing ('/') page
+            </script>
+        </head>
+        <body></body>
+        </html>
+    '''), 429
+
+
 # use a route decorator to create a route redirecting to the google login page
 @app.route('/login')
+@limiter.limit("5 per minute") # limits to 5 req/min
 def login():
     google = oauth.create_client('google')
     redirect_uri = url_for('authorize', _external=True)
@@ -48,6 +81,7 @@ def login():
 
 # use a route decorator to create a route for redirecting after successful login
 @app.route('/authorize')
+@limiter.limit("5 per minute") # limits to 5 req/min
 def authorize():
     google = oauth.create_client('google')
     token = google.authorize_access_token()
@@ -62,6 +96,7 @@ def authorize():
 
 # starter page
 @app.route('/')
+@limiter.limit("5 per minute") # limits to 5 req/min
 def home():
     return render_template('home.html', SITE_KEY=SITE_KEY)
 
@@ -91,7 +126,10 @@ def jokes_db_connection():
     return conn
 
 # create a route for the home page
+# login_required makes sure user auth is successful before showing data
+@login_required
 @app.route('/index', methods=['GET'])
+@limiter.limit("5 per minute") # limits to 5 req/min
 def index():
     # get the session email
     email = dict(session).get('email', None)
