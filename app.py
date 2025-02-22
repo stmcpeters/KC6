@@ -13,6 +13,7 @@ import os
 # assign the environment variables to variables to be used
 load_dotenv()
 SECRET_KEY = 'secret'
+SITE_KEY = os.getenv('SITE_KEY')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 
@@ -62,7 +63,7 @@ def authorize():
 # starter page
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return render_template('home.html', SITE_KEY=SITE_KEY)
 
 # use a route decorator to create a route for logging out
 @app.route('/logout')
