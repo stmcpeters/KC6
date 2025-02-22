@@ -48,8 +48,8 @@ Python 3.x
 `source venv/bin/activate`  
 3. Install Dependencies:
 `pip install -r requirements.txt`
-4. Get your OAuth 2.0 credentials from the Google API Console (here)[https://developers.google.com/identity/protocols/oauth2#1.-obtain-oauth-2.0-credentials-from-the-dynamic_data.setvar.console_name.]
-5. Set up Google reCAPTCHA (here)[https://developers.google.com/recaptcha/docs/display]
+4. Get your OAuth 2.0 credentials from the Google API Console [here](https://developers.google.com/identity/protocols/oauth2#1.-obtain-oauth-2.0-credentials-from-the-dynamic_data.setvar.console_name.)
+5. Set up Google reCAPTCHA [here](https://developers.google.com/recaptcha/docs/display)
 6. Set up Environment Variables in the `.env` file<br/>
 ```GOOGLE_CLIENT_ID=your_google_client_id``` <br/>
 ```GOOGLE_CLIENT_SECRET=your_google_client_secret```<br/>
